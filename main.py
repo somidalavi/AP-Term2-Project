@@ -12,6 +12,7 @@ if __name__ == "__main__":
     "Open Song", "~", "Audio Files (*.mp3 *.wav)")
     print("Got File " ,fileName);
     model = Model.main_model;
+    model.init();
     model.open_file(fileName[0]);
     window = Gui.MainWindow(model)
     window.show()
