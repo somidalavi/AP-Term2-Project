@@ -1,5 +1,7 @@
-from PySide2 import QtCore, QtWidgets
-
+from PySide2 import QtCore, QtWidgets, QtGui
+import pathlib
+file_path = str(pathlib.Path(__file__).parent.absolute());
+print("current path is " + file_path)
 slider_range = [1,20000]
 slider_page_step  = 2000;
 
@@ -28,18 +30,21 @@ class SlidersAndNameWidget(QtWidgets.QWidget):
         self.setLayout(self._layout);
 
     def value_change(self):
-        print("Hello At " + str(self._player_slider.value()));
         self._model.seek(self._player_slider.value());
 class MediaButtonsWidget(QtWidgets.QWidget):
     def __init__(self,model):
         super().__init__();
         self._model = model;
-        button_captions = [ "left",'start','stop','reset','right',]
+        icon_names = [ "rewind.png",'play.png','pause.png','stop.png','forwards.png',]
         self._buttons = []
         self._layout = QtWidgets.QHBoxLayout()
-        for caption in button_captions:
-            self._buttons.append(QtWidgets.QPushButton());
-            self._layout.addWidget(self._buttons[-1]);
+        for icon_name in icon_names:
+            icon = QtGui.QIcon(file_path + '/icons/' + icon_name);
+            button = QtWidgets.QPushButton();
+            button.setIcon(icon);
+            self._buttons.append(button);
+            self._layout.addWidget(button);
+
         self.setLayout(self._layout);
 
 class MediaPlayerWidget(QtWidgets.QWidget):
