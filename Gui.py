@@ -36,6 +36,7 @@ class MediaButtonsWidget(QtWidgets.QWidget):
         super().__init__();
         self._model = model;
         icon_names = [ "rewind.png",'play.png','pause.png','stop.png','forwards.png',]
+        #button_clicked_funcs = [self.rewind,self.play,self.pause,self.stop,self.fowards];
         self._buttons = []
         self._layout = QtWidgets.QHBoxLayout()
         for icon_name in icon_names:
@@ -44,7 +45,6 @@ class MediaButtonsWidget(QtWidgets.QWidget):
             button.setIcon(icon);
             self._buttons.append(button);
             self._layout.addWidget(button);
-
         self.setLayout(self._layout);
 
 class MediaPlayerWidget(QtWidgets.QWidget):
