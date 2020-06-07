@@ -1,43 +1,67 @@
 from PySide2 import QtCore, QtWidgets, QtGui
 from PySide2.QtCore import Slot
+import threading
 import pathlib
 file_path = str(pathlib.Path(__file__).parent.absolute());
 print("current path is " + file_path)
 slider_range = [1,20000]
 slider_page_step  = 2000;
-slider_single_step = 400;
+slider_single_step = 700;
 
 class SlidersAndNameWidget(QtWidgets.QWidget):
     def __init__(self,model):
         super().__init__();
         self._model = model
-        
+        self.lock = threading.Lock()
+        self._slider_timer = QtCore.QTimer();
+        self._slider_timer.setInterval(500)
+        self._slider_timer.timeout.connect(self.update_slider);
         self._volume_slider = QtWidgets.QSlider(QtCore.Qt.Orientation.Vertical)
         self._volume_slider.valueChanged.connect(self.volume_change);
         self._volume_slider.setValue(50);
         self._song_name_label = QtWidgets.QLabel("TestLabel");
-       
         self._player_slider = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal);
         self._player_slider.valueChanged.connect(self.value_change);
+        self._player_slider.sliderPressed.connect(self.dragging);
+        self._player_slider.sliderReleased.connect(self.released)
         self._player_slider.setRange(slider_range[0],slider_range[1]);
         self._player_slider.setPageStep(slider_page_step);
         self._player_slider.setSingleStep(slider_single_step)
+        self._player_slider.setTracking(False);
 
         temp_layout = QtWidgets.QVBoxLayout()
         temp_layout.addWidget(self._song_name_label);
         temp_layout.addWidget(self._player_slider);
-    
         temp_widget = QtWidgets.QWidget();
         temp_widget.setLayout(temp_layout);
         self._layout = QtWidgets.QHBoxLayout();
         self._layout.addWidget(temp_widget);
         self._layout.addWidget(self._volume_slider);
         self.setLayout(self._layout)
+        self._slider_timer.start(500)
+        
+    def dragging(self):
+        self._slider_timer.stop()
+    def released(self):
+        self._slider_timer.setInterval(500)
+        self._slider_timer.start(500)
+    def update_slider(self):
+        self.lock.acquire();
+        self.test = True;
+        self._player_slider.setValue(int(self._model.get_position()*  slider_range[1] )+ 1 );
+        self.test = False;
+        print("released lock at update")
+        self.lock.release()
     def volume_change(self,value):
         self._model.set_volume(value)
     def value_change(self):
-        self._model.seek(self._player_slider.value() / slider_range[1] );
-
+        if self.test: return 
+        val = self._player_slider.value();
+        self.lock.acquire();
+        print("got lock at value")
+        self._model.seek(val / slider_range[1]);
+        print("released lcok at alue")
+        self.lock.release()
 
 class MediaButtonsWidget(QtWidgets.QWidget):
     def __init__(self,model):

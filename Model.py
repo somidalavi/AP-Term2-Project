@@ -4,19 +4,23 @@ class Model(QtCore.QObject):
         super().__init__();
     
     def init(self):
-        self._player = QtMultimedia.QMediaPlayer(self)
-        print(self._player.isSeekable());
+        self.player = QtMultimedia.QMediaPlayer(self)
+        print(self.player.isSeekable());
     def seek(self,p_percent): #position is normalised from 0 to 1
-        self._player.setPosition(p_percent * self._player.duration());
+        self.player.setPosition(p_percent * self.player.duration());
+
     def open_file(self,path):
-        self._player.setMedia(QtCore.QUrl.fromLocalFile(path))
-        self._player.setVolume(50);
-        self._player.play()
-        print(self._player.errorString())
+        self.player.setMedia(QtCore.QUrl.fromLocalFile(path))
+        self.player.setVolume(50);
+        self.player.play()
+        print(self.player.errorString())
     def set_volume(self,vol):
-        self._player.setVolume(vol);
+        self.player.setVolume(vol);
     def pause(self):
-        self._player.pause()
+        self.player.pause()
     def play(self):
-        self._player.play()
+        self.player.play()
+    def get_position(self):
+        if (self.player.duration() == 0) : return 0;
+        return self.player.position() / self.player.duration();
 main_model = Model();
