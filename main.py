@@ -1,9 +1,14 @@
+#! /bin/python3
 import Gui
+import sqlite3
 import sys
 import Model
 from PySide2 import QtCore, QtWidgets
+import pathlib
+import os
 
 if __name__ == "__main__":
+    os.chdir(pathlib.Path(__file__).parent.absolute())
     app = QtWidgets.QApplication()
     """dialog = QtWidgets.QFileDialog(None);
     dialog.setFileMode(QtWidgets.QFileDialog.ExistingFile);

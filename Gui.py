@@ -43,18 +43,34 @@ class SlidersAndNameWidget(QtWidgets.QWidget):
         self._player_slider.setSingleStep(slider_single_step)
         self._player_slider.setTracking(False);
 
+        self._shuffle_button = QtWidgets.QCheckBox("Shuffle");
+        self._shuffle_button.toggled.connect(self.shuffle_toggled);
+        self._repeat_button = QtWidgets.QCheckBox("Repeat");
+        self._repeat_button.toggled.connect(self.repeat_toggled);
+        
         temp_layout = QtWidgets.QVBoxLayout()
         temp_layout.addWidget(self._song_name_label);
         temp_layout.addWidget(self._duration_label)
+        temp_layout.addWidget(self._shuffle_button);
+        temp_layout.addWidget(self._repeat_button);
         temp_layout.addWidget(self._player_slider);
+
         temp_widget = QtWidgets.QWidget();
         temp_widget.setLayout(temp_layout);
-
+        
         self._layout = QtWidgets.QHBoxLayout();
         self._layout.addWidget(temp_widget);
         self._layout.addWidget(self._volume_slider);
         
         self.setLayout(self._layout)
+
+        self.test = False;
+    def repeat_toggled(self,checked):
+        print("reapeating")
+        self._model.set_repeat(checked);
+    def shuffle_toggled(self,checked):
+        print("Checking")
+        self._model.set_shuffled(checked);
     def update_label(self):
         media = self._model.get_current_media_data();
         self._song_name_label.setText(media.title);
@@ -161,7 +177,6 @@ class PlayListWidget(QtWidgets.QTabWidget):
         self.addTab(now_playing,"Now Playing");
         now_playing.currentRowChanged.connect(self.song_index_changed);
         self._model.add_playlist("Now Playing");
-        
     def add_song_to_cur_playlist(self,media):
         print(type(media))
         self.currentWidget().addItem(QtWidgets.QListWidgetItem(media.title));
@@ -185,7 +200,7 @@ class MainWindow(QtWidgets.QWidget):
         self._menu = MenuBarWidget(self._playlist);
         
         self._status = QtWidgets.QStatusBar();
-        self._status.showMessage("Stopped");
+        self._status.showMessage("No Song");
         def update_title(status):
             if status == QMediaPlayer.StoppedState: self.setWindowTitle("Music Player-Stopped")
             elif status == QMediaPlayer.PausedState : self.setWindowTitle("Music Player-Paused")
