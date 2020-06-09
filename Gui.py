@@ -156,15 +156,13 @@ class GuiHelper:
         if len(fileName[0]) == 0 : return
         current_playlist = pl_widget_h.get_current_pl_name()
         print(current_playlist)
-        index = main_model.add_file(fileName[0],current_playlist);
-        print("Got it in Index " + str(index))
-        #main_model.open_file(index,current_playlist);
+        main_model.add_files((fileName[0],),current_playlist);
     @staticmethod
     def add_playlist():
         text, ok = QtWidgets.QInputDialog.getText(None,'Enter a name',
-                                                 'Playlist Name: ',
+                                                'Playlist Name: ',
                                                 QtWidgets.QLineEdit.Normal,
-                                                 '~'
+                                                '~'
                                                  )
         if ok and text:
             main_model.add_playlist(text);
@@ -175,17 +173,17 @@ class GuiHelper:
                                        "/home",
                                        QtWidgets.QFileDialog.ShowDirsOnly
                                        | QtWidgets.QFileDialog.DontResolveSymlinks)
-        print(directory)
-        path_directory = pathlib.Path(directory)
         playlist_name = os.path.basename(directory);
-        print(playlist_name)
         main_model.add_playlist(playlist_name)
-        for root, dirs, files in os.walk(directory,topdown=True):
-            for file in files:
-                new_path = path_directory / file
-                if new_path.suffix in allowed_suffixes:
-                    pass
-                    #main_model.add_file(str(new_path),playlist_name)
+        def path_generator():
+            for root, dirs, files in os.walk(directory,topdown=True):
+                path_directory = pathlib.Path(root);
+                for file in files:
+                    new_path = path_directory / file
+                    if new_path.suffix in allowed_suffixes:
+                        yield str(new_path)
+        path_gen = path_generator()
+        main_model.add_files(path_gen,playlist_name)
 
 
 class MenuBarWidget(QtWidgets.QMenuBar):

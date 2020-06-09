@@ -27,6 +27,7 @@ def setup_database():
     if exists:
         print("already exists!!");
         return (con,cur) 
+
     cur.execute('''CREATE TABLE  songs (
                 song_id INTEGER PRIMARY KEY,
                 path      TEXT NOT NULL UNIQUE,
@@ -102,11 +103,8 @@ class Model(QtCore.QObject):
                                      where playlist_id = ?;''',
                                                   (row[0],))
             self.add_playlist(row[1])
-            for nrow in t_cursor2:
-                print("Herello" , nrow[1],row[1])
-                self.add_file(nrow[1],row[1]);
-
-            
+            path_generator = (nrow[1] for nrow in t_cursor2)
+            self.add_files(path_generator,row[1])
     def update_playback_mode(self):
         if self._current_playlist == None : return 
         if self._repeating:
@@ -144,17 +142,19 @@ class Model(QtCore.QObject):
     def seek(self,p_percent): #position is normalised from 0 to 1
         self.player.setPosition(p_percent * self.player.duration());
     
-    def add_file(self,path,playlist_name):
-        n_media = QtMultimedia.QMediaContent(QtCore.QUrl.fromLocalFile(path));
+    def add_files(self,paths,playlist_name):
         cur_playlist = self._playlists[playlist_name]
-        cur_playlist.addMedia(n_media)
-        mdata = AudioMetadata(path)
-        mdata.dbase_id = self.add_song_to_database(mdata);
-        #if playlist_name != "Play Now":
-        self.add_song_to_database_playlist(mdata,cur_playlist);
-        self._playlists_mdata[playlist_name].append(mdata);
+        cur_playlist_mdata = self._playlists_mdata[playlist_name]
+        for path in paths:
+            n_media = QtMultimedia.QMediaContent(QtCore.QUrl.fromLocalFile(path));
+            cur_playlist.addMedia(n_media)
+            mdata = AudioMetadata(path)
+            mdata.dbase_id = self.add_song_to_database(mdata);
+            self.add_song_to_database_playlist(mdata,cur_playlist);
+            cur_playlist_mdata.append(mdata);
+
+        self.database_con.commit();
         self.playlistUpdated.emit(playlist_name);
-        return self._playlists[playlist_name].mediaCount() - 1;
 
     def add_playlist_to_database(self,name):
         self.database_cur.execute('''
@@ -162,25 +162,17 @@ class Model(QtCore.QObject):
                                  (NULL,?);
                                     ''',(name,))
         self.database_con.commit();
-        return self.database_cur.execute('''
-                                      SELECT playlist_id FROM playlists
-                                      WHERE name = ?;
-                                      ''',(name,)).fetchone()[0];
+        return self.database_cur.lastrowid
     def add_song_to_database_playlist(self,mdata,playlist):
         self.database_cur.execute('''INSERT OR IGNORE INTO playlist_group values
-                                  (?,?);''',(playlist.dbase_id,mdata.dbase_id))
-        self.database_con.commit()
+                                  (?,?);''',(playlist.dbase_id,mdata.dbase_id)) 
     def add_song_to_database(self,mdata):
         data_tuple =  (mdata.path,mdata.title,
                        mdata.genre,mdata.artist,mdata.album
                        ,mdata.duration)
         self.database_cur.execute('''INSERT OR IGNORE INTO songs values 
                                   (NULL,?,?,?,?,?,? );''',data_tuple)   
-        self.database_con.commit()
-        return self.database_cur.execute('''
-                                      SELECT song_id FROM songs
-                                      WHERE path = ?;
-                                      ''',(mdata.path,)).fetchone()[0];
+        return self.database_cur.lastrowid
     def open_file(self,index,playlist_name):
         if playlist_name != self._current_playlist_name:
             self.set_current_playlist(playlist_name);
