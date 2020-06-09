@@ -75,11 +75,7 @@ class Model(QtCore.QObject):
         super().__init__(); 
     def init(self):
         self.database_con , self.database_cur = setup_database();
-        
-        self._genres = set()
-        self._artists = set()
-        self._albums = set()
-        
+        self._playback_rate = 1.0
         self._repeating = False
         self._shuffled = False
         
@@ -147,7 +143,7 @@ class Model(QtCore.QObject):
 
     def seek(self,p_percent): #position is normalised from 0 to 1
         self.player.setPosition(p_percent * self.player.duration());
-
+    
     def add_file(self,path,playlist_name):
         n_media = QtMultimedia.QMediaContent(QtCore.QUrl.fromLocalFile(path));
         cur_playlist = self._playlists[playlist_name]
@@ -190,7 +186,18 @@ class Model(QtCore.QObject):
             self.set_current_playlist(playlist_name);
         self._current_playlist.setCurrentIndex(index);
         self.player.play()
-    
+
+    def slow_playback(self):
+        self._playback_rate -= 0.25
+        if self._playback_rate < 0.49: self._playback_rate = 0.5
+        self.player.setPlaybackRate(self._playback_rate)
+        #this needs to be added for some reason
+        self.player.setPosition(self.player.position())
+    def increase_playback(self):
+        self._playback_rate += 0.25
+        if self._playback_rate > 2.0 : self._playback_rate = 2.0
+        self.player.setPlaybackRate(self._playback_rate);
+        self.player.setPosition(self.player.position())
     def get_playlist_mdata(self,name):
         return self._playlists_mdata[name];
     def get_current_media_data(self):
