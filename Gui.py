@@ -153,11 +153,18 @@ class GuiHelper:
         "Choose Song", "~", "Audio Files (*.mp3 *.wav *.m4a)")
         if len(fileName[0]) == 0 : return
         current_playlist = pl_widget_h.get_current_pl_name()
+        print(current_playlist)
         index = main_model.add_file(fileName[0],current_playlist);
         print("Got it in Index " + str(index))
         main_model.open_file(index,current_playlist);
-        pl_widget_h.add_song_to_cur_playlist(main_model.get_current_media_data())
-
+    def add_playlist():
+        text, ok = QtWidgets.QInputDialog.getText(None,'Enter a name',
+                                                 'Playlist Name: ',
+                                                QtWidgets.QLineEdit.Normal,
+                                                 '~'
+                                                 )
+        if ok and text:
+            main_model.add_playlist(text);
 class MenuBarWidget(QtWidgets.QMenuBar):
     def __init__(self,pl_widget_h):
         super().__init__();
@@ -167,21 +174,37 @@ class MenuBarWidget(QtWidgets.QMenuBar):
         self._open_action = self._file_menu.addAction("Open File");
         self._open_action.setShortcuts(QtGui.QKeySequence.Open)
         self._open_action.triggered.connect(partial(GuiHelper.open_file,pl_widget_h));
+        self._newplaylist_action = self._file_menu.addAction("Add a Playlist");
+        self._newplaylist_action.setShortcuts(QtGui.QKeySequence.AddTab);
+        self._newplaylist_action.triggered.connect(GuiHelper.add_playlist);
         self.addMenu(self._file_menu)
 
 class PlayListWidget(QtWidgets.QTabWidget):
     def __init__(self):
         super().__init__();
+        self._playlist_dict = {}
         self._model = main_model
-        now_playing = QtWidgets.QListWidget();
-        self.addTab(now_playing,"Now Playing");
-        now_playing.currentRowChanged.connect(self.song_index_changed);
+        self._model.playlistAdded.connect(self.add_playlist)
+        self._model.playlistUpdated.connect(self.update_playlist);
         self._model.add_playlist("Now Playing");
-    def add_song_to_cur_playlist(self,media):
-        print(type(media))
-        new_item = QtWidgets.QListWidgetItem(media.title )
-        self.currentWidget().addItem(new_item);
 
+    
+    @QtCore.Slot(str)
+    def add_playlist(self,name):
+        print("HEr")
+        new_playlist = QtWidgets.QListWidget();
+        new_playlist.currentRowChanged.connect(self.song_index_changed);
+        self.addTab(new_playlist,name);
+        self._playlist_dict[name] = new_playlist
+
+    @QtCore.Slot(str)
+    def update_playlist(self,name):
+        cur_list = self._playlist_dict[name];
+        cur_list.clear();
+        mdata_list = self._model.get_playlist_mdata(name)
+        for mdata in mdata_list:
+            cur_list.addItem(QtWidgets.QListWidgetItem(mdata.title))
+        
     def song_index_changed(self,index):
         print("In Index " + str(index))
         self._model.open_file(index,self.get_current_pl_name());

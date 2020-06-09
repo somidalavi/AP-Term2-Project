@@ -1,8 +1,9 @@
 #! /bin/python3
+   
+import Model
 import Gui
 import sqlite3
 import sys
-import Model
 from PySide2 import QtCore, QtWidgets
 import pathlib
 import os
@@ -12,8 +13,7 @@ if __name__ == "__main__":
     app = QtWidgets.QApplication()
     """dialog = QtWidgets.QFileDialog(None);
     dialog.setFileMode(QtWidgets.QFileDialog.ExistingFile);
-    dialog.exec_();"""
-    
+    dialog.exec_();""" 
     Model.main_model.init();
     window = Gui.MainWindow()
     window.show()
