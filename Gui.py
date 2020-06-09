@@ -4,11 +4,13 @@ from PySide2.QtMultimedia import QMediaPlayer
 from Model import main_model
 from functools import partial
 import pathlib
+import os
+import os.path
 import threading
 
 file_path = pathlib.Path(__file__).parent.absolute();
 print(type(file_path))
-
+allowed_suffixes = ['.mp3','.wav','.m4a']
 update_interval = 100
 slider_range = [1,20000]
 slider_page_step  = 2000;
@@ -157,6 +159,7 @@ class GuiHelper:
         index = main_model.add_file(fileName[0],current_playlist);
         print("Got it in Index " + str(index))
         #main_model.open_file(index,current_playlist);
+    @staticmethod
     def add_playlist():
         text, ok = QtWidgets.QInputDialog.getText(None,'Enter a name',
                                                  'Playlist Name: ',
@@ -165,6 +168,26 @@ class GuiHelper:
                                                  )
         if ok and text:
             main_model.add_playlist(text);
+    @staticmethod
+    def playlist_dir():    
+        directory = QtWidgets.QFileDialog.getExistingDirectory(None,
+                                        "Open Directory",
+                                       "/home",
+                                       QtWidgets.QFileDialog.ShowDirsOnly
+                                       | QtWidgets.QFileDialog.DontResolveSymlinks)
+        print(directory)
+        path_directory = pathlib.Path(directory)
+        playlist_name = os.path.basename(directory);
+        print(playlist_name)
+        main_model.add_playlist(playlist_name)
+        for root, dirs, files in os.walk(directory,topdown=True):
+            for file in files:
+                new_path = path_directory / file
+                if new_path.suffix in allowed_suffixes:
+                    pass
+                    #main_model.add_file(str(new_path),playlist_name)
+
+
 class MenuBarWidget(QtWidgets.QMenuBar):
     def __init__(self,pl_widget_h):
         super().__init__();
@@ -177,7 +200,18 @@ class MenuBarWidget(QtWidgets.QMenuBar):
         self._newplaylist_action = self._file_menu.addAction("Add a Playlist");
         self._newplaylist_action.setShortcuts(QtGui.QKeySequence.AddTab);
         self._newplaylist_action.triggered.connect(GuiHelper.add_playlist);
+        self._playlist_fromdir_action = self._file_menu.addAction("Playlist from a folder");
+        self._playlist_fromdir_action.triggered.connect(GuiHelper.playlist_dir);
+        self._playback_menu = QtWidgets.QMenu(self);
+        self._playback_menu.setTitle("Playback")
+        self._faster_playback_action = self._playback_menu.addAction("Faster Playback")
+        self._slower_playback_action = self._playback_menu.addAction("Slower Playback")
+        self._faster_playback_action.setShortcuts(QtGui.QKeySequence.Forward)
+        self._slower_playback_action.setShortcuts(QtGui.QKeySequence.Back)
+        self._faster_playback_action.triggered.connect(self._model.increase_playback)
+        self._slower_playback_action.triggered.connect(self._model.slow_playback)
         self.addMenu(self._file_menu)
+        self.addMenu(self._playback_menu);
 
 class PlayListWidget(QtWidgets.QTabWidget):
     def __init__(self):
