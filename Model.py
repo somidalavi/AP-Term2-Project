@@ -17,7 +17,7 @@ class AudioMetadata():
         self.path = file_path
         self.genre = tag.genre
         self.duration = tag.duration
-        #Used when the meta data is represented in a data base
+        #Used when the meta data is represented in a database
         self.dbase_id = -1;
 
 def setup_database():
@@ -93,6 +93,24 @@ class Model(QtCore.QObject):
         self.player.setVolume(50);
     def shut_down(self):
         self.database_con.close();
+    def read_from_database(self):
+        t_cursor = self.database_con.execute('''SELECT playlist_id, name FROM playlists;''')
+        tmp_ls = []
+        for row in t_cursor:
+            tmp_ls.append((row[0],row[1]));
+        for row in tmp_ls:
+            t_cursor2 = self.database_con.execute('''SELECT playlist_id,path,songs.song_id
+                                     FROM playlist_group
+                                     INNER JOIN songs
+                                     on songs.song_id = playlist_group.song_id
+                                     where playlist_id = ?;''',
+                                                  (row[0],))
+            self.add_playlist(row[1])
+            for nrow in t_cursor2:
+                print("Herello" , nrow[1],row[1])
+                self.add_file(nrow[1],row[1]);
+
+            
     def update_playback_mode(self):
         if self._current_playlist == None : return 
         if self._repeating:
@@ -153,7 +171,7 @@ class Model(QtCore.QObject):
                                       WHERE name = ?;
                                       ''',(name,)).fetchone()[0];
     def add_song_to_database_playlist(self,mdata,playlist):
-        self.database_cur.execute('''INSERT INTO playlist_group values
+        self.database_cur.execute('''INSERT OR IGNORE INTO playlist_group values
                                   (?,?);''',(playlist.dbase_id,mdata.dbase_id))
         self.database_con.commit()
     def add_song_to_database(self,mdata):

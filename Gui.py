@@ -156,7 +156,7 @@ class GuiHelper:
         print(current_playlist)
         index = main_model.add_file(fileName[0],current_playlist);
         print("Got it in Index " + str(index))
-        main_model.open_file(index,current_playlist);
+        #main_model.open_file(index,current_playlist);
     def add_playlist():
         text, ok = QtWidgets.QInputDialog.getText(None,'Enter a name',
                                                  'Playlist Name: ',
@@ -186,7 +186,7 @@ class PlayListWidget(QtWidgets.QTabWidget):
         self._model = main_model
         self._model.playlistAdded.connect(self.add_playlist)
         self._model.playlistUpdated.connect(self.update_playlist);
-        self._model.add_playlist("Now Playing");
+        #self._model.add_playlist("Now Playing");
 
     
     @QtCore.Slot(str)

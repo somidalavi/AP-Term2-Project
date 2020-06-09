@@ -16,6 +16,7 @@ if __name__ == "__main__":
     dialog.exec_();""" 
     Model.main_model.init();
     window = Gui.MainWindow()
+    Model.main_model.read_from_database();
     window.show()
     sys.exit(app.exec_());
     Model.main_model.shut_down()
