@@ -179,7 +179,9 @@ class PlayListWidget(QtWidgets.QTabWidget):
         self._model.add_playlist("Now Playing");
     def add_song_to_cur_playlist(self,media):
         print(type(media))
-        self.currentWidget().addItem(QtWidgets.QListWidgetItem(media.title));
+        new_item = QtWidgets.QListWidgetItem(media.title )
+        self.currentWidget().addItem(new_item);
+
     def song_index_changed(self,index):
         print("In Index " + str(index))
         self._model.open_file(index,self.get_current_pl_name());
@@ -218,4 +220,4 @@ class MainWindow(QtWidgets.QWidget):
         self.setLayout(self._layout);
     def update_status(self):
         media = self._model.get_current_media_data();
-        self._status.showMessage("%s-%s-%s" % (media.title,media.artist,media.album))
+        self._status.showMessage("%s-%s-%s-%s" % (media.title,media.artist,media.album,media.genre))

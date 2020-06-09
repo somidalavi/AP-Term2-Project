@@ -18,3 +18,4 @@ if __name__ == "__main__":
     window = Gui.MainWindow()
     window.show()
     sys.exit(app.exec_());
+    Model.main_model.shut_down()
