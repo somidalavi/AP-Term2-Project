@@ -22,6 +22,8 @@ class SlidersAndNameWidget(QtWidgets.QWidget):
         
         self._model = main_model
         
+
+        self.should_update_position = True;
         self._update_timer = QtCore.QTimer();
         self._update_timer.setInterval(update_interval)
         self._update_timer.timeout.connect(self.update);
@@ -66,12 +68,9 @@ class SlidersAndNameWidget(QtWidgets.QWidget):
         
         self.setLayout(self._layout)
 
-        self.test = False;
     def repeat_toggled(self,checked):
-        print("reapeating")
         self._model.set_repeat(checked);
     def shuffle_toggled(self,checked):
-        print("Checking")
         self._model.set_shuffled(checked);
     def update_label(self):
         media = self._model.get_current_media_data();
@@ -87,23 +86,24 @@ class SlidersAndNameWidget(QtWidgets.QWidget):
         pos = self._model.get_position()
         if pos is None : return 
         #update the sliders
-        self.test = True;
+        self.should_update_position = False;
         self._player_slider.setValue(int(pos*slider_range[1])+ 1 );
-        self.test = False;
+        self.should_update_position = True;
         # set the duration label correctoy
         mdata = self._model.get_current_media_data();
         passed = int(pos * mdata.duration);
         total = mdata.duration;
         self._duration_label.setText("%02d:%02d / %02d:%02d" % (passed // 60 ,passed % 60,
                                                        total // 60 , total % 60));
-    def volume_change(self,value):
-        self._model.set_volume(value)
     
     def value_change(self):
-        if self.test: return 
+        if not self.should_update_position: return 
         val = self._player_slider.value();
         self._model.seek(val / slider_range[1]);
 
+
+    def volume_change(self,value):
+        self._model.set_volume(value)
 class MediaButtonsWidget(QtWidgets.QWidget):
     def __init__(self):
         super().__init__();
@@ -121,13 +121,9 @@ class MediaButtonsWidget(QtWidgets.QWidget):
             self._layout.addWidget(button);
         self.setLayout(self._layout);
 
-    def rewind(self):
-        pass
     def play(self):
-        print("Playing")
         self._model.play()
     def pause(self):
-        print("Pausing")
         self._model.pause()
     def stop(self):
         self._model.stop()
@@ -160,10 +156,7 @@ class GuiHelper:
     @staticmethod
     def add_playlist():
         text, ok = QtWidgets.QInputDialog.getText(None,'Enter a name',
-                                                'Playlist Name: ',
-                                                QtWidgets.QLineEdit.Normal,
-                                                '~'
-                                                 )
+        'Playlist Name: ',QtWidgets.QLineEdit.Normal, '~' )
         if ok and text:
             main_model.add_playlist(text);
     @staticmethod
@@ -218,7 +211,7 @@ class PlayListWidget(QtWidgets.QTabWidget):
         self._model = main_model
         self._model.playlistAdded.connect(self.add_playlist)
         self._model.playlistUpdated.connect(self.update_playlist);
-        #self._model.add_playlist("Now Playing");
+        self._model.add_playlist("Now Playing");
 
     
     @QtCore.Slot(str)
@@ -238,7 +231,7 @@ class PlayListWidget(QtWidgets.QTabWidget):
             cur_list.addItem(QtWidgets.QListWidgetItem(mdata.title))
         
     def song_index_changed(self,index):
-        print("In Index " + str(index))
+        print("Playing index ",index)
         self._model.open_file(index,self.get_current_pl_name());
 
     def get_current_pl_name(self):
