@@ -1,5 +1,6 @@
 from PySide2 import QtMultimedia, QtCore
 from tinytag import TinyTag
+from QtCore import Signal
 import sqlite3
 import pathlib
 import os
@@ -16,14 +17,15 @@ class AudioMetadata():
         self.path = file_path
         self.genre = tag.genre
         self.duration = tag.duration
+
 def setup_database():
-   
+    exists = os.path.isfile(str(file_path / 'lib.db')) 
     con = sqlite3.connect('lib.db')
     cur = con.cursor()
-    if os.path.isfile(str(file_path / 'lib.db')):
+    if exists:
         print("already exists!!");
         return (con,cur) 
-    cur.execute('''CREATE TABLE IF NOT EXISTS songs (
+    cur.execute('''CREATE TABLE  songs (
                 song_id INTEGER PRIMARY KEY,
                 path      TEXT NOT NULL UNIQUE,
                 title     TEXT NOT NULL,
@@ -36,38 +38,13 @@ def setup_database():
                 CREATE UNIQUE INDEX idx_songs_path
                 ON songs (path);
                 ''')
-
-    cur.execute('''
-                CREATE TABLE IF NOT EXISTS genres (
-                genre_id INTEGER PRIMARY KEY,
-                name    TEXT NOT NULL UNIQUE
-                );''')
-    cur.execute('''
-                CREATE UNIQUE INDEX idx_genre_name
-                ON genres (name);
-                ''')
-
-    cur.execute('''CREATE TABLE IF NOT EXISTS albums (
-                album_id INTEGER PRIMARY KEY,
-                name    TEXT NOT NULL UNIQUE
-                );''')
-    cur.execute('''CREATE UNIQUE INDEX idx_album_name
-                ON albums (name);''')
-    
-    cur.execute('''CREATE TABLE IF NOT EXISTS artists (
-                artist_id INTEGER PRIMARY KEY,
-                name    TEXT NOT NULL UNIQUE
-                );''')
-    cur.execute('''CREATE UNIQUE INDEX idx_artist_name
-                ON artists (name);''')
-
-    cur.execute('''CREATE TABLE IF NOT EXISTS playlists(
+    cur.execute('''CREATE TABLE IF playlists(
                 playlist_id INTEGER PRIMARY KEY,
                 name    TEXT NOT NULL
                     );
                 ''')
     cur.execute('''
-                CREATE TABLE IF NOT EXISTS playlist_group(
+                CREATE TABLE playlist_group(
                 playlist_id INTEGER NOT NULL,
                 song_id INTEGER NOT NULL,
                 PRIMARY KEY (playlist_id,song_id),
@@ -88,20 +65,26 @@ class Model(QtCore.QObject):
         super().__init__();
     
     def init(self):
+        self.playlistAdded = Signal(str);
+        #This will be Dumb But okay
+        self.playlistUpdated = Signal(str);
         self.database_con , self.database_cur = setup_database();
+        
         self._genres = set()
         self._artists = set()
         self._albums = set()
+        
         self._repeating = False
         self._shuffled = False
+        
         self._playlists_mdata = {} # mdata = meta data
         self._playlists = {}
         self._current_playlist = None;
         self._current_playlist_mdata = None;
         self._current_playlist_name = None;
+       
         self.player = QtMultimedia.QMediaPlayer(self)
         self.player.setVolume(50);
-        print(self.player.isSeekable());
     def shut_down(self):
         self.database_con.close();
     def update_playback_mode(self):
@@ -143,23 +126,12 @@ class Model(QtCore.QObject):
         self.add_song_to_database(mdata);
         self._playlists_mdata[playlist_name].append(mdata);
         return self._playlists[playlist_name].mediaCount() - 1;
-    #value of table should only be given as a literal and not and input from user
-    def insert_to_table(self,table,value):
-        self.database_cur.execute('INSERT OR IGNORE INTO %s values (NULL, ?);'
-                                  % (table),(value, ))
-    def get_database_id(self,table,value):
-        row = self.database_cur.execute('SELECT rowid FROM %s WHERE name = ? '
-                                        % (table),(value, )).fetchone()
-        return row[0]
     def add_song_to_database(self,mdata):
-        self.insert_to_table("genres",mdata.genre)
-        self.insert_to_table("albums",mdata.album)
-        self.insert_to_table("artists",mdata.artist)
-        g_id = self.get_database_id('genres',mdata.genre);
-        al_id = self.get_database_id('albums',mdata.album);
-        ar_id = self.get_database_id('artists',mdata.artist);
-        self.database_cur.execute('''INSERT OR IGNORE INTO songs values (NULL,?,?,?,?,?,? );''',
-                                  (mdata.path,mdata.title,g_id,ar_id,al_id,mdata.duration))
+        data_tuple =  (mdata.path,mdata.title,
+                       mdata.genre,mdata.artist,mdata.album
+                       ,mdata.duration)
+        self.database_cur.execute('''INSERT OR IGNORE INTO songs values 
+                                  (NULL,?,?,?,?,?,? );''',data_tuple)   
         self.database_con.commit()
     def open_file(self,index,playlist_name):
         if playlist_name != self._current_playlist_name:
