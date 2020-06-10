@@ -123,7 +123,32 @@ class Model(QtCore.QObject):
             path_generator = (nrow[1] for nrow in t_cursor2)
             self.add_files(path_generator,row[1])
         
-        
+    def get_genres(self):
+        cursor = self.database_con.execute('''SELECT DISTINCT genre_id 
+                                             FROM songs''');
+        return (row[0] for row in cursor)
+    def get_albums(self):
+        cursor = self.database_con.execute('''SELECT DISTINCT album_id
+                                              FROM songs''')
+        return (row[0] for row in cursor)
+    def get_artists(self):
+        cursor = self.database_con.execute('''SELECT DISTINCT artist_id
+                                             FROM songs''')
+        return (row[0] for row in cursor)
+    # always should be called privately
+    def get_song_by_column_value(self,column,value):
+        cursor = self.database_con.execute('''SELECT path
+                                              FROM songs
+                                              WHERE %s = ?''' % (column),
+                                              (value, ))
+        return (row[0] for row in cursor)
+    def get_artist_songs(self,name):
+        return self.get_song_by_column_value('artist_id',name)
+    
+    def get_genre_songs(self,name):
+        return self.get_song_by_column_value('genre_id',name)
+    def get_album_songs(self,name):
+        return self.get_song_by_column_value('album_id',name)
     def set_current_playlist(self,playlist_name):
         self._current_playlist_name = playlist_name
         self._current_playlist = self._playlists[playlist_name];
@@ -146,6 +171,7 @@ class Model(QtCore.QObject):
         print("addint to ",playlist_name)
         paths = [path for path in paths];
         for path in paths:
+            break;
             print(path, playlist_name)
         saving_playlist = True
         saving_to_library = False;

@@ -182,6 +182,8 @@ class GuiHelper:
     @staticmethod
     def search_library():
         LibSearch.show();
+        print("Here")
+
     
 class MenuBarWidget(QtWidgets.QMenuBar):
     def __init__(self,pl_widget_h):
@@ -231,7 +233,7 @@ class PlayListWidget(QtWidgets.QTabWidget):
     def add_playlist(self,name):
         print("HEr")
         new_playlist = QtWidgets.QListWidget();
-        new_playlist.currentRowChanged.connect(self.song_index_changed);
+        new_playlist.itemDoubleClicked.connect(partial(self.song_changed,new_playlist));
         self.addTab(new_playlist,name);
         self._playlist_dict[name] = new_playlist
 
@@ -242,10 +244,9 @@ class PlayListWidget(QtWidgets.QTabWidget):
         mdata_list = self._model.get_playlist_mdata(name)
         for mdata in mdata_list:
             cur_list.addItem(QtWidgets.QListWidgetItem(mdata.title))
-        
-    def song_index_changed(self,index):
-        print("Playing index ",index)
-        self._model.open_file(index,self.get_current_pl_name());
+    def song_changed(self,pl,item):
+        print("Playing index ",pl)
+        self._model.open_file(pl.indexFromItem(item).row(),self.get_current_pl_name());
 
     def get_current_pl_name(self):
         return self.tabText(self.currentIndex())
