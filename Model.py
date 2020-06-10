@@ -72,8 +72,8 @@ global_mutex = QtCore.QRecursiveMutex()
 def mutually_exclusive(func):
     def f(*args,**kargs):
         locker = QtCore.QMutexLocker(global_mutex)
-        func(*args,**kargs);
-    return f
+        return func(*args,**kargs);
+    return f;
 
 class Model(QtCore.QObject):
 
@@ -98,6 +98,8 @@ class Model(QtCore.QObject):
 
         self._playlists["Library"] = self._library
         self._playlists_mdata["Library"] = []
+        self._playlists["Now Playing"] = QtMultimedia.QMediaPlaylist()
+        self._playlists_mdata["Now Playing"] = []
         #it's first signal will be emitted later in read_from_database
         
         self.player = QtMultimedia.QMediaPlayer(self)
@@ -108,6 +110,10 @@ class Model(QtCore.QObject):
         #TODO: acutally make a use of all the stuff we keep in the database 
         #rather than just the path
         self.playlistAdded.emit("Library")
+        self.playlistAdded.emit("Now Playing")
+        cursor = self.database_con.execute("select path from songs");
+        path_generator = (row[0] for row in cursor )
+        self.add_files(path_generator,"Library");
         #needs a big rethink but it's working for now
         t_cursor = self.database_con.execute('SELECT playlist_id,name FROM playlists;')
         tmp_ls = []
@@ -124,10 +130,8 @@ class Model(QtCore.QObject):
             self.add_playlist(row[1])
             path_generator = (nrow[1] for nrow in t_cursor2)
             self.add_files(path_generator,row[1])
-        cursor = self.database_con.execute("select path from songs");
-        path_generator = (row[0] for row in cursor )
-        self.add_files(path_generator,"Library");
-
+        
+        
     @mutually_exclusive
     def set_current_playlist(self,playlist_name):
         self._current_playlist_name = playlist_name
@@ -138,6 +142,7 @@ class Model(QtCore.QObject):
         
     @mutually_exclusive
     def add_playlist(self,name):
+        print('adding playlist',name);
         if name in self._playlists :
             print("can't add that playlist")
             return False
@@ -145,10 +150,11 @@ class Model(QtCore.QObject):
         new_playlist = QtMultimedia.QMediaPlaylist()
         self._playlists[name] = new_playlist;
         new_playlist.dbase_id = self.add_playlist_to_database(name);
+        print('added playlsit' , name);
         self.playlistAdded.emit(name);
-
     @mutually_exclusive
     def add_files(self,paths,playlist_name):
+        print("addint to ",playlist_name)
         paths = [path for path in paths];
         for path in paths:
             print(path, playlist_name)
@@ -176,6 +182,7 @@ class Model(QtCore.QObject):
                 self.add_song_to_database_playlist(mdata,cur_playlist);
 
         self.database_con.commit();
+        print("finished adding to ",playlist_name)
         self.playlistUpdated.emit(playlist_name);
 
     def add_playlist_to_database(self,name):

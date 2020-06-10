@@ -12,7 +12,7 @@ import threading
 file_path = pathlib.Path(__file__).parent.absolute();
 print(type(file_path))
 allowed_suffixes = ['.mp3','.wav','.m4a']
-update_interval = 100
+update_interval = 20
 slider_range = [1,20000]
 slider_page_step  = 2000;
 slider_single_step = 700;
@@ -220,12 +220,12 @@ class MenuBarWidget(QtWidgets.QMenuBar):
 
 class PlayListWidget(QtWidgets.QTabWidget):
     def __init__(self):
+        print("Initintg Playlist IWdget")
         super().__init__();
         self._playlist_dict = {}
         self._model = main_model
         self._model.playlistAdded.connect(self.add_playlist)
         self._model.playlistUpdated.connect(self.update_playlist);
-        self._model.add_playlist("Now Playing");
 
     
     @QtCore.Slot(str)

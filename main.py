@@ -5,7 +5,7 @@ import sys
 from PySide2 import QtCore, QtWidgets
 import pathlib
 import os
-
+import threading
 if __name__ == "__main__":
     os.chdir(pathlib.Path(__file__).parent.absolute())
     app = QtWidgets.QApplication()
