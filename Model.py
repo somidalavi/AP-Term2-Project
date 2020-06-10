@@ -21,8 +21,8 @@ class AudioMetadata():
         self.dbase_id = -1;
 
 def setup_database():
-    exists = os.path.isfile(str(file_path / 'lib.db')) 
-    con = sqlite3.connect('lib.db')
+    exists = os.path.isfile(str(file_path / 'lib2.db')) 
+    con = sqlite3.connect('lib2.db')
     cur = con.cursor()
     if exists:
         print("already exists!!");
@@ -67,14 +67,6 @@ def setup_database():
                 ''')
     con.commit()
     return (con,cur)
-global_mutex = QtCore.QRecursiveMutex()
-
-def mutually_exclusive(func):
-    def f(*args,**kargs):
-        locker = QtCore.QMutexLocker(global_mutex)
-        return func(*args,**kargs);
-    return f;
-
 class Model(QtCore.QObject):
 
     playlistAdded = QtCore.Signal(str);
@@ -132,7 +124,6 @@ class Model(QtCore.QObject):
             self.add_files(path_generator,row[1])
         
         
-    @mutually_exclusive
     def set_current_playlist(self,playlist_name):
         self._current_playlist_name = playlist_name
         self._current_playlist = self._playlists[playlist_name];
@@ -140,7 +131,6 @@ class Model(QtCore.QObject):
         self.update_playback_mode();
         self.player.setPlaylist(self._current_playlist);
         
-    @mutually_exclusive
     def add_playlist(self,name):
         print('adding playlist',name);
         if name in self._playlists :
@@ -152,7 +142,6 @@ class Model(QtCore.QObject):
         new_playlist.dbase_id = self.add_playlist_to_database(name);
         print('added playlsit' , name);
         self.playlistAdded.emit(name);
-    @mutually_exclusive
     def add_files(self,paths,playlist_name):
         print("addint to ",playlist_name)
         paths = [path for path in paths];
@@ -180,8 +169,8 @@ class Model(QtCore.QObject):
             mdata.dbase_id = self.add_song_to_database(mdata);
             if saving_playlist:
                 self.add_song_to_database_playlist(mdata,cur_playlist);
-
-        self.database_con.commit();
+        if saving_playlist:
+            self.database_con.commit();
         print("finished adding to ",playlist_name)
         self.playlistUpdated.emit(playlist_name);
 
@@ -208,18 +197,15 @@ class Model(QtCore.QObject):
                                   (NULL,?,?,?,?,?,? );''',data_tuple)   
         return self.database_cur.lastrowid
     
-    @mutually_exclusive
     def open_file(self,index,playlist_name):
         if playlist_name != self._current_playlist_name:
             self.set_current_playlist(playlist_name);
         self._current_playlist.setCurrentIndex(index);
         self.player.play()
    
-    @mutually_exclusive
     def get_playlist_mdata(self,name):
         return self._playlists_mdata[name];
     
-    @mutually_exclusive
     def get_current_media_data(self):
         return self._current_playlist_mdata[self._current_playlist.currentIndex()];
 
@@ -236,54 +222,42 @@ class Model(QtCore.QObject):
             self._current_playlist.setPlaybackMode(QMediaPlaylist.Random)
         else:
             self._current_playlist.setPlaybackMode(QMediaPlaylist.Loop);
-    @mutually_exclusive
     def set_repeat(self,flag):
         self._repeating = flag
         self.update_playback_mode()
     
-    @mutually_exclusive
     def set_shuffled(self,flag):
         self._shuffled = flag;
         self.update_playback_mode()
 
-    @mutually_exclusive
     def slow_playback(self):
         self._playback_rate -= 0.25
         if self._playback_rate < 0.49: self._playback_rate = 0.5
         self.player.setPlaybackRate(self._playback_rate)
         #this needs to be added for some reason
         self.player.setPosition(self.player.position())
-    @mutually_exclusive
     def increase_playback(self):
         self._playback_rate += 0.25
         if self._playback_rate > 2.0 : self._playback_rate = 2.0
         self.player.setPlaybackRate(self._playback_rate);
         self.player.setPosition(self.player.position())
     
-    @mutually_exclusive
     def seek(self,p_percent): #position is normalised from 0 to 1
         self.player.setPosition(p_percent * self.player.duration());
     
-    @mutually_exclusive
     def set_volume(self,vol):
         self.player.setVolume(vol);
-    @mutually_exclusive
     def pause(self):
         self.player.pause()
-    @mutually_exclusive
     def play(self):
         self.player.play()
-    @mutually_exclusive
     def stop(self):
         self.player.stop()
-    @mutually_exclusive
     def forwards(self):
         self._current_playlist.next()
-    @mutually_exclusive
     def rewind(self):
         self._current_playlist.previous()
     
-    @mutually_exclusive
     def get_position(self):
         if (self.player.duration() == 0) : return None;
         return self.player.position() / self.player.duration();

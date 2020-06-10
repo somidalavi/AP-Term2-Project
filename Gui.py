@@ -12,7 +12,7 @@ import threading
 file_path = pathlib.Path(__file__).parent.absolute();
 print(type(file_path))
 allowed_suffixes = ['.mp3','.wav','.m4a']
-update_interval = 20
+update_interval = 100
 slider_range = [1,20000]
 slider_page_step  = 2000;
 slider_single_step = 700;
@@ -76,7 +76,6 @@ class SlidersAndNameWidget(QtWidgets.QWidget):
     def update_label(self):
         media = self._model.get_current_media_data();
         self._song_name_label.setText(media.title);
-        self.update()
     def dragging(self):
         self._update_timer.stop()
     def released(self):
