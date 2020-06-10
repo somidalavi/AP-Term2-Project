@@ -3,6 +3,7 @@ from PySide2.QtCore import Slot
 from PySide2.QtMultimedia import QMediaPlayer
 from Model import main_model
 from functools import partial
+import LibSearch
 import pathlib
 import os
 import os.path
@@ -86,6 +87,7 @@ class SlidersAndNameWidget(QtWidgets.QWidget):
         pos = self._model.get_position()
         if pos is None : return 
         #update the sliders
+        #this probably has bugs too
         self.should_update_position = False;
         self._player_slider.setValue(int(pos*slider_range[1])+ 1 );
         self.should_update_position = True;
@@ -178,7 +180,10 @@ class GuiHelper:
         path_gen = path_generator()
         main_model.add_files(path_gen,playlist_name)
 
-
+    @staticmethod
+    def search_library():
+        LibSearch.show();
+    
 class MenuBarWidget(QtWidgets.QMenuBar):
     def __init__(self,pl_widget_h):
         super().__init__();
@@ -193,16 +198,25 @@ class MenuBarWidget(QtWidgets.QMenuBar):
         self._newplaylist_action.triggered.connect(GuiHelper.add_playlist);
         self._playlist_fromdir_action = self._file_menu.addAction("Playlist from a folder");
         self._playlist_fromdir_action.triggered.connect(GuiHelper.playlist_dir);
+        
         self._playback_menu = QtWidgets.QMenu(self);
         self._playback_menu.setTitle("Playback")
         self._faster_playback_action = self._playback_menu.addAction("Faster Playback")
-        self._slower_playback_action = self._playback_menu.addAction("Slower Playback")
-        self._faster_playback_action.setShortcuts(QtGui.QKeySequence.Forward)
-        self._slower_playback_action.setShortcuts(QtGui.QKeySequence.Back)
         self._faster_playback_action.triggered.connect(self._model.increase_playback)
+        self._faster_playback_action.setShortcuts(QtGui.QKeySequence.Forward)
+        self._slower_playback_action = self._playback_menu.addAction("Slower Playback")
+        self._slower_playback_action.setShortcuts(QtGui.QKeySequence.Back)
         self._slower_playback_action.triggered.connect(self._model.slow_playback)
+        
+        self._library_menu = QtWidgets.QMenu(self)
+        self._library_menu.setTitle("Library")
+        self._search_library_action = self._library_menu.addAction("Search Library")
+        self._search_library_action.setShortcuts(QtGui.QKeySequence.Find)
+        self._search_library_action.triggered.connect(GuiHelper.search_library);
+
         self.addMenu(self._file_menu)
         self.addMenu(self._playback_menu);
+        self.addMenu(self._library_menu);
 
 class PlayListWidget(QtWidgets.QTabWidget):
     def __init__(self):
