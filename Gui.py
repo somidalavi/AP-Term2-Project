@@ -11,7 +11,7 @@ import threading
 
 file_path = pathlib.Path(__file__).parent.absolute();
 print(type(file_path))
-allowed_suffixes = ['.mp3','.wav','.m4a']
+allowed_suffixes = ['.mp3','.wav','.m4a','.mp4']
 update_interval = 100
 slider_range = [1,20000]
 slider_page_step  = 2000;
