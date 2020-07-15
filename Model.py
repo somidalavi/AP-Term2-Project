@@ -162,7 +162,8 @@ class Model(QtCore.QObject):
     def add_playlist(self,name):
         print('adding playlist',name);
         if name in self._playlists :
-            print("can't add that playlist")
+            error = QtWidgets.QErrorMessage()
+            error.showMwssage('The play list already exists!')
             return False
         self._playlists_mdata[name] = [];
         new_playlist = QtMultimedia.QMediaPlaylist()
