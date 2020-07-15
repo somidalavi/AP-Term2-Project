@@ -1,4 +1,6 @@
 from PySide2 import QtMultimedia, QtCore
+from PySide2 import QtWidgets
+from PySide2.QtWidgets import QMessageBox
 from tinytag import TinyTag
 from PySide2.QtCore import Signal
 import sqlite3
@@ -159,8 +161,10 @@ class Model(QtCore.QObject):
     def add_playlist(self,name):
         print('adding playlist',name);
         if name in self._playlists :
-            error = QtWidgets.QErrorMessage()
-            error.showMwssage('The play list already exists!')
+            print("The playlist already exists!")
+            error = QtWidgets.QMessageBox()
+            error.critical(None,"Error","The playlist already exists!",QMessageBox.Ok,QMessageBox.NoButton);
+            error.setFixedSize(500,200);
             return False
         self._playlists_mdata[name] = [];
         new_playlist = QtMultimedia.QMediaPlaylist()
