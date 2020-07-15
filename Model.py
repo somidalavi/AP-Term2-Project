@@ -168,7 +168,7 @@ class Model(QtCore.QObject):
         print('added playlsit' , name);
         self.playlistAdded.emit(name);
     def add_files(self,paths,playlist_name):
-        print("addint to ",playlist_name)
+        print("adding to ",playlist_name)
         paths = [path for path in paths];
         for path in paths:
             break;
