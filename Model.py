@@ -122,7 +122,7 @@ class Model(QtCore.QObject):
             self.add_playlist(row[1])
             path_generator = (nrow[1] for nrow in t_cursor2)
             self.add_files(path_generator,row[1])
-    #These functions return the distinct genres,albums, or artist    
+        
     def get_genres(self):
         cursor = self.database_con.execute('''SELECT DISTINCT genre_id 
                                              FROM songs''');
@@ -142,8 +142,6 @@ class Model(QtCore.QObject):
                                               WHERE %s = ?''' % (column),
                                               (value, ))
         return (row[0] for row in cursor)
-    #these functions return the paths of the songs of a particular
-    #genre artist of album
     def get_artist_songs(self,name):
         return self.get_song_by_column_value('artist_id',name)
     
@@ -151,7 +149,6 @@ class Model(QtCore.QObject):
         return self.get_song_by_column_value('genre_id',name)
     def get_album_songs(self,name):
         return self.get_song_by_column_value('album_id',name)
-
     def set_current_playlist(self,playlist_name):
         self._current_playlist_name = playlist_name
         self._current_playlist = self._playlists[playlist_name];
@@ -171,7 +168,7 @@ class Model(QtCore.QObject):
         print('added playlsit' , name);
         self.playlistAdded.emit(name);
     def add_files(self,paths,playlist_name):
-        print("adding to ",playlist_name)
+        print("adding to ",playlist_name,"...")
         paths = [path for path in paths];
         for path in paths:
             break;
@@ -200,7 +197,7 @@ class Model(QtCore.QObject):
                 self.add_song_to_database_playlist(mdata,cur_playlist);
         if saving_playlist:
             self.database_con.commit();
-        print("finished adding to ",playlist_name)
+        print("finished adding to ",playlist_name,".")
         self.playlistUpdated.emit(playlist_name);
 
     def add_playlist_to_database(self,name):
