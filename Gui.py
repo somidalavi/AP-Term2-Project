@@ -168,7 +168,9 @@ class GuiHelper:
                                        QtWidgets.QFileDialog.ShowDirsOnly
                                        | QtWidgets.QFileDialog.DontResolveSymlinks)
         playlist_name = os.path.basename(directory);
-        main_model.add_playlist(playlist_name)
+        ok = main_model.add_playlist(playlist_name)
+        if ok == False:
+            return 
         def path_generator():
             for root, dirs, files in os.walk(directory,topdown=True):
                 path_directory = pathlib.Path(root);

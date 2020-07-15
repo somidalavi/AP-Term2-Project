@@ -172,6 +172,7 @@ class Model(QtCore.QObject):
         new_playlist.dbase_id = self.add_playlist_to_database(name);
         print('added playlsit' , name);
         self.playlistAdded.emit(name);
+        return True;
     def add_files(self,paths,playlist_name):
         print("adding to ",playlist_name,"...")
         paths = [path for path in paths];
