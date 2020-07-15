@@ -231,7 +231,7 @@ class PlayListWidget(QtWidgets.QTabWidget):
     
     @QtCore.Slot(str)
     def add_playlist(self,name):
-        print("HEr")
+        print("The Playlists data changed.")
         new_playlist = QtWidgets.QListWidget();
         new_playlist.itemDoubleClicked.connect(partial(self.song_changed,new_playlist));
         self.addTab(new_playlist,name);
